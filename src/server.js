@@ -6,6 +6,7 @@ require("./db"); // ensures schema exists before routes touch it
 const groupsRouter = require("./routes/groups");
 const expensesRouter = require("./routes/expenses");
 const paymentsRouter = require("./routes/payments");
+const balancesRouter = require("./routes/balances");
 
 const app = express();
 app.use(express.json());
@@ -15,6 +16,7 @@ app.get("/api/health", (req, res) => res.json({ ok: true }));
 app.use("/api/groups", groupsRouter);
 app.use("/api/groups/:groupId/expenses", expensesRouter);
 app.use("/api/groups/:groupId/payments", paymentsRouter);
+app.use("/api/groups/:groupId/balances", balancesRouter);
 
 // Static frontend build (added in Phase 3) will be served from here.
 const publicDir = path.join(__dirname, "..", "public");
