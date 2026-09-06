@@ -265,8 +265,10 @@
       '<section class="card"><div class="section-label">Settle up</div><div id="settleBody"></div></section>' +
       '<section class="card"><div class="ledger-head" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div class="section-label" style="margin-bottom:0;">Expenses</div>' +
+      '<div class="toolbar" style="display:flex;gap:.4rem;">' +
+      '<button class="btn small" id="importCostcoBtn">Import shopping receipt</button>' +
       '<button class="btn primary small" id="addExpenseBtn">+ Add expense</button>' +
-      '</div><div id="expenseForm"></div><div class="expense-list" id="expenseList" style="margin-top:.75rem;"></div></section>' +
+      '</div></div><div id="importForm"></div><div id="expenseForm"></div><div class="expense-list" id="expenseList" style="margin-top:.75rem;"></div></section>' +
       '<section class="card"><div class="ledger-head" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div class="section-label" style="margin-bottom:0;">Payments</div>' +
       '<button class="btn small" id="addPaymentBtn">+ Record payment</button>' +
@@ -299,6 +301,9 @@
     });
     document.getElementById("addPaymentBtn").addEventListener("click", function () {
       togglePaymentForm(group, identity);
+    });
+    document.getElementById("importCostcoBtn").addEventListener("click", function () {
+      toggleImportForm(group);
     });
 
     refreshBalances(group);
@@ -442,6 +447,184 @@
           });
         });
       });
+    });
+  }
+
+  // ---------- import from Costco Split ----------
+  var COSTCO_SPLIT_URL = "https://mohanavenkatan-ux.github.io/Costco-split/";
+
+  function toggleImportForm(group) {
+    var container = document.getElementById("importForm");
+    if (container.dataset.open === "1") {
+      container.innerHTML = "";
+      container.dataset.open = "";
+      return;
+    }
+    container.dataset.open = "1";
+    renderImportPasteStep(container, group);
+
+    var peopleParam = group.members.map(function (m) { return encodeURIComponent(m.name); }).join(",");
+    window.open(COSTCO_SPLIT_URL + "?people=" + peopleParam, "_blank");
+  }
+
+  function renderImportPasteStep(container, group) {
+    container.innerHTML =
+      '<div class="card" style="margin-top:.75rem;background:var(--paper-sunken);">' +
+      '<div class="hint" style="margin-bottom:.6rem;">Costco Split opened in a new tab, pre-filled with this group. ' +
+      "Assign the items there, click <strong>Copy summary</strong>, then paste it below.</div>" +
+      '<div class="field"><label>Pasted summary</label><textarea id="importText" rows="6" placeholder="Paste the copied summary here"></textarea></div>' +
+      '<button class="btn primary" id="importParseBtn">Parse</button> ' +
+      '<button class="btn ghost" id="importCancelBtn">Cancel</button>' +
+      '<div class="error-text" id="importError"></div>' +
+      "</div>";
+
+    document.getElementById("importCancelBtn").addEventListener("click", function () {
+      container.innerHTML = "";
+      container.dataset.open = "";
+    });
+    document.getElementById("importParseBtn").addEventListener("click", function () {
+      var text = document.getElementById("importText").value;
+      var errorEl = document.getElementById("importError");
+      try {
+        var parsed = window.CostcoSummary.parseCostcoSplitSummary(text);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        return;
+      }
+      renderImportPreview(container, group, parsed);
+    });
+  }
+
+  function renderImportPreview(container, group, parsed) {
+    var byLowerName = {};
+    group.members.forEach(function (m) { byLowerName[m.name.toLowerCase()] = m.id; });
+
+    var sumCents = parsed.people.reduce(function (s, p) { return s + p.amount_cents; }, 0);
+    var mismatchWarning = "";
+    if (sumCents !== parsed.total_cents) {
+      mismatchWarning =
+        '<div class="hint" style="color:var(--warn);">Heads up: this receipt\'s full total was ' +
+        fmt(parsed.total_cents, parsed.currency_symbol || group.currency) +
+        ", but only " +
+        fmt(sumCents, parsed.currency_symbol || group.currency) +
+        " across these people is being imported - looks like some items weren't assigned to anyone in Costco Split yet." +
+        "</div>";
+    }
+    var currencyWarning = "";
+    if (parsed.currency_symbol && parsed.currency_symbol !== group.currency) {
+      currencyWarning =
+        '<div class="hint" style="color:var(--warn);">This summary used "' +
+        escapeHtml(parsed.currency_symbol) +
+        '" but this group\'s currency is "' +
+        escapeHtml(group.currency) +
+        '" - the amounts below are taken as-is, with no conversion.</div>';
+    }
+
+    var rows = parsed.people
+      .map(function (p, i) {
+        var matchedId = byLowerName[p.name.toLowerCase()] || "";
+        var options = group.members
+          .map(function (m) {
+            return '<option value="' + m.id + '"' + (m.id === matchedId ? " selected" : "") + ">" + escapeHtml(m.name) + "</option>";
+          })
+          .join("");
+        return (
+          '<div class="participant-row"><label style="flex:2;">' +
+          escapeHtml(p.name) +
+          " &rarr; <select class=\"import-match\" data-idx=\"" +
+          i +
+          '">' +
+          '<option value="">(no match - won\'t be imported)</option>' +
+          options +
+          "</select></label><span class=\"amt money\">" +
+          fmt(p.amount_cents, parsed.currency_symbol || group.currency) +
+          "</span></div>"
+        );
+      })
+      .join("");
+
+    var payerMatchId = parsed.payerName ? byLowerName[parsed.payerName.toLowerCase()] || "" : "";
+    var payerOptions = group.members.map(function (m) { return '<option value="' + m.id + '"' + (m.id === payerMatchId ? " selected" : "") + ">" + escapeHtml(m.name) + "</option>"; }).join("");
+
+    container.innerHTML =
+      '<div class="card" style="margin-top:.75rem;background:var(--paper-sunken);">' +
+      '<div class="field"><label>Description</label><input id="importDesc" value="' +
+      escapeHtml(parsed.description) +
+      '"></div>' +
+      mismatchWarning +
+      currencyWarning +
+      '<div class="section-label" style="margin-top:.8rem;">Match people</div>' +
+      rows +
+      '<div class="field" style="margin-top:.6rem;"><label>Paid by</label><select id="importPaidBy"><option value="">(pick who paid)</option>' +
+      payerOptions +
+      "</select></div>" +
+      '<button class="btn primary" id="importConfirmBtn">Add this expense</button> ' +
+      '<button class="btn ghost" id="importBackBtn">Start over</button>' +
+      '<div class="error-text" id="importConfirmError"></div>' +
+      "</div>";
+
+    document.getElementById("importBackBtn").addEventListener("click", function () {
+      renderImportPasteStep(container, group);
+    });
+
+    document.getElementById("importConfirmBtn").addEventListener("click", function () {
+      var errorEl = document.getElementById("importConfirmError");
+      var description = document.getElementById("importDesc").value.trim();
+      var paidBy = document.getElementById("importPaidBy").value;
+      if (!description) {
+        errorEl.textContent = "Description is required.";
+        return;
+      }
+      if (!paidBy) {
+        errorEl.textContent = "Pick who paid.";
+        return;
+      }
+
+      var participants = [];
+      var ok = true;
+      container.querySelectorAll(".import-match").forEach(function (sel) {
+        var personId = sel.value;
+        var idx = Number(sel.dataset.idx);
+        if (!personId) return; // unmatched people are simply excluded
+        participants.push({ person_id: personId, amount_cents: parsed.people[idx].amount_cents });
+      });
+      var seen = {};
+      participants.forEach(function (p) {
+        if (seen[p.person_id]) ok = false;
+        seen[p.person_id] = true;
+      });
+      if (!ok) {
+        errorEl.textContent = "Two rows are matched to the same person - fix that first.";
+        return;
+      }
+      if (participants.length === 0) {
+        errorEl.textContent = "At least one person needs to be matched.";
+        return;
+      }
+
+      var amount = participants.reduce(function (s, p) { return s + p.amount_cents; }, 0) / 100;
+
+      api("/groups/" + group.id + "/expenses", {
+        method: "POST",
+        body: {
+          description: description,
+          amount: amount,
+          paid_by: paidBy,
+          split_type: "exact",
+          participants: participants,
+          category: "shopping",
+          source: "costco-split",
+        },
+      })
+        .then(function () {
+          container.innerHTML = "";
+          container.dataset.open = "";
+          refreshExpenses(group);
+          refreshBalances(group);
+        })
+        .catch(function (err) {
+          errorEl.textContent = err.message;
+        });
     });
   }
 
