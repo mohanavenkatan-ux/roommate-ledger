@@ -131,7 +131,15 @@
       '<div class="section-label">Create a group</div>' +
       '<div class="field"><label>Group name</label><input id="createName" placeholder="Apartment 4B"></div>' +
       '<div class="field-row">' +
-      '<div class="field"><label>Currency symbol</label><input id="createCurrency" value="$" maxlength="3"></div>' +
+      '<div class="field"><label>Currency</label><select id="createCurrency">' +
+      '<option value="$">$ - Dollar</option>' +
+      '<option value="&euro;">&euro; - Euro</option>' +
+      '<option value="&pound;">&pound; - Pound</option>' +
+      '<option value="&#8377;">&#8377; - Rupee</option>' +
+      '<option value="&yen;">&yen; - Yen</option>' +
+      '<option value="&#8361;">&#8361; - Won</option>' +
+      '<option value="Fr">Fr - Franc</option>' +
+      "</select></div>" +
       '<div class="field"><label>PIN (optional)</label><input id="createPin" placeholder="Leave blank for none"></div>' +
       "</div>" +
       '<button class="btn primary" id="createBtn">Create group</button>' +
@@ -260,7 +268,8 @@
       '<section class="card"><div class="section-label">Invite</div>' +
       '<div class="share-link" id="shareLink">' +
       escapeHtml(shareUrl) +
-      '</div><button class="btn small" id="copyLink" style="margin-top:.5rem;">Copy link</button></section>' +
+      '</div><button class="btn small" id="copyLink" style="margin-top:.5rem;">Copy link</button> ' +
+      '<button class="btn small" id="exportBtn" style="margin-top:.5rem;">Export data</button></section>' +
       '<section class="card"><div class="section-label">Balances</div><div class="summary-row" id="balancePills"></div></section>' +
       '<section class="card"><div class="section-label">Settle up</div><div id="settleBody"></div></section>' +
       '<section class="card"><div class="ledger-head" style="display:flex;justify-content:space-between;align-items:center;">' +
@@ -294,6 +303,10 @@
       } else {
         window.prompt("Copy this link:", shareUrl);
       }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", function () {
+      exportGroupData(group);
     });
 
     document.getElementById("addExpenseBtn").addEventListener("click", function () {
@@ -447,6 +460,32 @@
           });
         });
       });
+    });
+  }
+
+  // ---------- export ----------
+  function exportGroupData(group) {
+    Promise.all([
+      api("/groups/" + group.id + "/expenses"),
+      api("/groups/" + group.id + "/payments"),
+      api("/groups/" + group.id + "/balances"),
+    ]).then(function (results) {
+      var payload = {
+        exported_at: new Date().toISOString(),
+        group: { id: group.id, name: group.name, currency: group.currency, members: group.members },
+        expenses: results[0],
+        payments: results[1],
+        balances: results[2],
+      };
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = group.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase() + "-export.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   }
 
@@ -804,4 +843,10 @@
   }
 
   boot();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
 })();
