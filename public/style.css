@@ -1,0 +1,147 @@
+:root{
+  --paper: #EDEFE9;
+  --paper-raised: #F8F9F4;
+  --paper-sunken: #E3E6DC;
+  --ink: #20241F;
+  --ink-soft: #5B6058;
+  --ink-faint: #8A8F82;
+  --line: #CDD1C2;
+  --line-strong: #B7BCAA;
+  --accent: #2F6F5E;
+  --accent-ink: #F8F9F4;
+  --owe: #B14A3A;
+  --owe-soft: #F3E2DD;
+  --credit: #4C7A3E;
+  --credit-soft: #E4EBDC;
+  --warn: #B08A2E;
+  --warn-soft: #F3ECD9;
+  --shadow: rgba(32,36,31,0.14);
+
+  --p0: #4C6C8C; --p1: #8C5A3C; --p2: #B08A2E; --p3: #7A5C99;
+  --p4: #C4577A; --p5: #3E8A93; --p6: #6B8C4C; --p7: #99657A;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper: #1B1D18; --paper-raised: #24271F; --paper-sunken: #15170F;
+    --ink: #EDEFE5; --ink-soft: #A8AC9C; --ink-faint: #767A6C;
+    --line: #383C31; --line-strong: #4A4F3F;
+    --accent: #6FBFA2; --accent-ink: #10231D;
+    --owe: #E0897A; --owe-soft: #3A2620;
+    --credit: #9AC788; --credit-soft: #223522;
+    --warn: #E3C46B; --warn-soft: #3A331B;
+    --shadow: rgba(0,0,0,0.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper: #1B1D18; --paper-raised: #24271F; --paper-sunken: #15170F;
+  --ink: #EDEFE5; --ink-soft: #A8AC9C; --ink-faint: #767A6C;
+  --line: #383C31; --line-strong: #4A4F3F;
+  --accent: #6FBFA2; --accent-ink: #10231D;
+  --owe: #E0897A; --owe-soft: #3A2620;
+  --credit: #9AC788; --credit-soft: #223522;
+  --warn: #E3C46B; --warn-soft: #3A331B;
+  --shadow: rgba(0,0,0,0.4);
+}
+
+*{box-sizing:border-box;}
+body{
+  background: var(--paper); color: var(--ink); margin:0; padding: 0 0 4rem;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+}
+.money, input[type="number"], .num{
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.wrap{ max-width: 720px; margin: 0 auto; padding: 0 1.25rem; }
+
+header.page{ padding: 2rem 0 1rem; display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+header.page h1{
+  font-family: "Fraunces", Georgia, serif; font-weight: 600; margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.2rem); text-wrap: balance; letter-spacing: -0.01em;
+}
+header.page .who{ font-size: .85rem; color: var(--ink-soft); }
+header.page .who button{ margin-left:.4rem; }
+
+section{ margin-top: 1.5rem; }
+.card{
+  background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px;
+  padding: 1.1rem 1.25rem; box-shadow: 0 1px 2px var(--shadow);
+}
+.section-label{
+  font-size: .72rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--ink-faint); font-weight: 600; margin-bottom: .7rem;
+}
+
+.field{ margin-bottom: .85rem; }
+.field label{ display:block; font-size:.78rem; color:var(--ink-soft); margin-bottom:.3rem; }
+.field input, .field select, .field textarea{
+  width:100%; font: inherit; font-size:.95rem; padding:.5rem .6rem;
+  background: var(--paper); border:1px solid var(--line-strong); border-radius:8px; color:var(--ink);
+}
+.field input:focus, .field select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+.field-row{ display:flex; gap:.75rem; flex-wrap:wrap; }
+.field-row > .field{ flex:1 1 140px; }
+.hint{ font-size:.76rem; color:var(--ink-faint); margin-top:.3rem; }
+.error-text{ font-size:.82rem; color:var(--owe); margin-top:.5rem; }
+
+.btn{
+  border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);
+  border-radius:8px; padding:.5rem .9rem; font-size:.88rem; cursor:pointer; font-family:inherit;
+}
+.btn:hover{ border-color:var(--accent); color:var(--accent); }
+.btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.btn.primary:hover{ opacity:.9; color:var(--accent-ink); }
+.btn.ghost{ border-color:transparent; color:var(--ink-faint); padding:.3rem .5rem; font-size:.8rem; }
+.btn.ghost:hover{ color:var(--owe); }
+.btn.small{ padding:.35rem .6rem; font-size:.8rem; }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+.summary-row{ display:flex; gap:.5rem; flex-wrap:wrap; }
+.pill{
+  flex:1 1 110px; background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+  padding:.55rem .7rem; display:flex; flex-direction:column; gap:.15rem;
+  border-top:3px solid var(--pc, var(--accent));
+}
+.pill .who{ display:flex; align-items:center; gap:.35rem; font-size:.76rem; color:var(--ink-soft);
+  text-transform:uppercase; letter-spacing:.04em; }
+.pill .dot{ width:.5rem; height:.5rem; border-radius:50%; background:var(--pc, var(--accent)); flex:none; }
+.pill .amt{ font-size:1.05rem; font-weight:500; }
+.pill .amt.owed{ color:var(--credit); }
+.pill .amt.owes{ color:var(--owe); }
+
+.settle-list, .expense-list, .payment-list{ display:flex; flex-direction:column; gap:.6rem; }
+.settle-row, .expense-row, .payment-row{
+  display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+  background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:.6rem .8rem;
+}
+.settle-row .who{ font-size:.9rem; }
+.settle-row .amt{ font-weight:600; color:var(--owe); }
+.expense-row .desc{ font-weight:500; }
+.expense-row .meta{ font-size:.76rem; color:var(--ink-faint); }
+.expense-row .amt{ font-weight:600; white-space:nowrap; }
+.expense-row .actions{ display:flex; gap:.3rem; }
+.empty-note{ color:var(--ink-faint); font-size:.88rem; }
+
+.member-picker{ display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1rem; }
+.member-picker button{
+  border:1px solid var(--line-strong); background:var(--paper); color:var(--ink);
+  border-radius:999px; padding:.5rem 1rem; cursor:pointer; font:inherit; font-size:.9rem;
+}
+.member-picker button:hover{ border-color:var(--accent); color:var(--accent); }
+
+.participant-row{ display:flex; align-items:center; gap:.6rem; margin-bottom:.5rem; }
+.participant-row label{ flex:1; font-size:.9rem; display:flex; align-items:center; gap:.4rem; }
+.participant-row input[type="number"]{ width:6.5rem; }
+.participant-row input[type="checkbox"]{ width:auto; }
+
+.share-link{
+  display:flex; gap:.5rem; align-items:center; background:var(--paper); border:1px solid var(--line-strong);
+  border-radius:8px; padding:.5rem .6rem; font-size:.82rem; overflow-x:auto; white-space:nowrap;
+}
+
+footer.note{ margin-top:2rem; text-align:center; color:var(--ink-faint); font-size:.78rem; }
+
+@media (max-width: 560px){
+  .expense-row{ flex-direction:column; align-items:flex-start; }
+  .expense-row .actions{ align-self:flex-end; }
+}
