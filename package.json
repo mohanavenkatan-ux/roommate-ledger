@@ -1,0 +1,20 @@
+{
+  "name": "roommate-ledger",
+  "version": "0.1.0",
+  "description": "Self-hosted Splitwise-style expense splitter for roommates",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test test/"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "nanoid": "^3.3.7"
+  }
+}

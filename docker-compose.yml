@@ -1,0 +1,11 @@
+services:
+  roommate-ledger:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ledger-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  ledger-data:
